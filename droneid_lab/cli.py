@@ -9,7 +9,8 @@ def main():
     p.add_argument('--iq-order',choices=['IQ','QI'],default='IQ');p.add_argument('--mode',choices=['turbo','baseline'],default='turbo')
     p.add_argument('--boundary',choices=['baseline','overlap'],default='baseline');p.add_argument('--output',default='result.redacted.json')
     p.add_argument('--private',action='store_true',help='Export identifiers/coordinates locally')
-    a=p.parse_args();c=Config(fs=a.fs,fc=a.fc,format=a.format,byte_order=a.byte_order,iq_order=a.iq_order,mode=a.mode,boundary=a.boundary)
+    p.add_argument('--equalization',choices=['none','zf'],default=None,help='Default: zf for turbo, none for baseline')
+    a=p.parse_args();c=Config(fs=a.fs,fc=a.fc,format=a.format,byte_order=a.byte_order,iq_order=a.iq_order,mode=a.mode,boundary=a.boundary,equalization=a.equalization)
     try:
         r=decode_file(a.input,c);export(a.output,r,c,not a.private);print(json.dumps(summary(r)))
         if not r:print('Không tìm thấy burst phù hợp trong file.')

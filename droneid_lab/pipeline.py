@@ -28,12 +28,17 @@ class Config:
     chunk_seconds: float=.5
     boundary: str='baseline'  # overlap uses ownership by cut midpoint
     mode: str='baseline'  # baseline, continue_crc, equalized, turbo
+    equalization: str|None=None  # independent of FEC; explicit 'none' reproduces raw FFT
+    def __post_init__(self):
+        if self.equalization is None:
+            self.equalization='zf' if self.mode in ('turbo','equalized') else 'none'
     def validate(self):
         if not math.isfinite(self.fs) or not 15.26e6 <= self.fs <= 200e6: raise ValueError('Fs phải trong [15.26, 200] MS/s cho implementation này.')
         if self.fc is not None and (not math.isfinite(self.fc) or self.fc<=0): raise ValueError('Fc phải dương hoặc để trống (unknown).')
         if self.format not in ('float32','int16') or self.byte_order not in ('little','big') or self.iq_order not in ('IQ','QI'): raise ValueError('Format/byte order/IQ order không hợp lệ.')
         if not math.isfinite(self.chunk_seconds) or not .003<=self.chunk_seconds<=.5: raise ValueError('Chunk từ 0.003 đến 0.5 giây.')
         if self.boundary not in ('baseline','overlap') or self.mode not in ('baseline','continue_crc','equalized','turbo'): raise ValueError('Chế độ không hợp lệ.')
+        if self.equalization not in ('none','zf'):raise ValueError('Cân bằng kênh phải là none hoặc zf.')
 
 class Cancelled(Exception): pass
 def check_cancel(cancel):
@@ -96,25 +101,31 @@ def synchronize(prepared):
     with quiet(): packet=Packet(prepared['resampled'].copy(),debug=False,enable_zc_detection=False,legacy=False)
     return packet
 
-def symbols(packet,mode='baseline'):
+def symbols(packet,mode='baseline',equalization=None):
+    if equalization is None:equalization='zf' if mode in ('turbo','equalized') else 'none'
+    if equalization not in ('none','zf'):raise ValueError('Cân bằng kênh không hợp lệ.')
     with quiet():
         raw=packet.get_symbol_data(skip_zc=True)
-        # Experimental channel recomputed from the SAME FFT pass; not the constructor debug branch.
+        # Estimate the channel from the SAME FFT settings used for the data symbols.
         with_cp,full=packet.raw_data_to_symbols(packet.raw_samples_orig,packet.start,ffo=packet.detected_ffo,sampling_offset=packet.sampling_offset,linear_rotation=0)
-        from .vendor.zcsequence import zcsequence_f
-        channels=[]
-        for idx,root in [(3,600),(5,147)]:
-            expected=zcsequence_f(root,601); expected[300]=1
-            channels.append(full[idx]/expected)
-        channel=(channels[0]+channels[1])*.5
-        if mode=='equalized' and np.any(np.abs(channel)<1e-12):
-            raise ValueError('Ước lượng kênh gần zero; không dùng nhánh equalized thử nghiệm.')
-        # Diagnostic division must never reject a baseline frame. DC is removed later.
+        from .vendor.zcsequence import zcsequence_t
+        # proto17 create_zc maps this 601-element sequence directly to carriers.
+        # It is NOT the FFT of a 601-sample waveform (zcsequence_f).
+        # Match proto17 process_file: estimate from the first ZC, no complex averaging.
+        expected=zcsequence_t(600,601)
+        active=np.arange(601)!=300
+        channel=np.ones(601,dtype=np.complex128)
+        channel[active]=full[3][active]/expected[active]
+        if equalization=='zf' and (not np.isfinite(channel[active]).all() or np.any(np.abs(channel[active])<1e-12)):
+            raise ValueError('Ước lượng kênh không hữu hạn hoặc gần zero; không tự chuyển sang raw FFT.')
+        # DC has no transmitted reference: retain it untouched; descramble removes it.
+        equalized=np.asarray(raw,dtype=np.complex128).copy()
         with np.errstate(divide='ignore',invalid='ignore'):
-            equalized=np.asarray(raw)/channel
+            equalized[:,active]/=channel[active]
     return {'raw_fft':np.asarray(raw),'channel':channel,'equalized':equalized,
             'time_with_cp':with_cp,'full_fft':np.asarray(full),
-            'qpsk_input':equalized if mode=='equalized' else np.asarray(raw),
+            'qpsk_input':equalized if equalization=='zf' else np.asarray(raw),
+            'equalization':equalization,'channel_zc_symbol':3,'channel_zc_root':600,
             'cp_lengths':list(helpers.CP_LENGTHS),'NFFT':1024,'selected_bins':601}
 
 def decide(input_symbols,phase=0):
@@ -188,7 +199,8 @@ def decode_candidate(candidate,config,cancel=None,retain=True,phase_trace=None):
     try:
         check_cancel(cancel); prep=prepare(candidate)
         stage='synchronization'; packet=synchronize(prep)
-        check_cancel(cancel); stage='FFT_channel'; sy=symbols(packet,config.mode)
+        check_cancel(cancel); stage='FFT_channel'; sy=symbols(packet,config.mode,config.equalization)
+        r['equalization']=config.equalization
         if retain: r['intermediates'].update(prep=prep,packet=packet,symbols=sy)
         r['sync']={'start_resampled':int(packet.start),'FFO_Hz':float(packet.detected_ffo),'sampling_offset':float(packet.sampling_offset),'coarse_Hz':prep['coarse_estimate_Hz']}
         for phase in range(4):

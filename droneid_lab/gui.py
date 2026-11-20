@@ -45,6 +45,11 @@ class App:
         self.status=tk.StringVar(value='Chọn IQ. baseline: systematic; turbo: TurboFEC + CRC24 và CRC16.');ttk.Label(root,textvariable=self.status).pack(fill='x')
         ttk.Label(root,text='Fs: mẫu phức/giây; 50000000 = 50 MS/s. Fc bỏ trống nếu không biết. CRC không xác thực người phát.').pack(fill='x')
         ttk.Label(root,text='App chưa được xác minh là pilot; home riêng biệt. Altitude ≠ height. Vận tốc/góc: raw, chưa xác minh đơn vị/yaw.').pack(fill='x')
+        self.equalization=tk.StringVar(value='zf')
+        eq_controls=ttk.Frame(root);eq_controls.pack(fill='x')
+        ttk.Label(eq_controls,text='Cân bằng kênh').pack(side='left')
+        eq_selector=ttk.Combobox(eq_controls,textvariable=self.equalization,values=['zf','none'],state='readonly',width=8)
+        eq_selector.pack(side='left');self.input_widgets.append((eq_selector,'readonly'))
         cols=['candidate','slice','status','CRC16','CRC24','serial','drone lat/lon','app lat/lon','home lat/lon','altitude m','height m','vN/vE/vU raw','angle raw']
         frame=ttk.Frame(root);frame.pack(fill='x')
         self.table=ttk.Treeview(frame,columns=cols,show='headings',height=7)
@@ -65,7 +70,7 @@ class App:
             try:
                 fs=float(v['Fs Hz']);fc=float(v['Fc Hz (unknown)']) if v['Fc Hz (unknown)'].strip() else None
             except ValueError:raise ValueError('Fs và Fc phải là số theo Hz; ví dụ Fs = 50000000. Fc có thể để trống.')
-            self.config=Config(fs=fs,fc=fc,format=v['format'],byte_order=v['byte order'],iq_order=v['I/Q'],mode=v['mode']);self.config.validate()
+            self.config=Config(fs=fs,fc=fc,format=v['format'],byte_order=v['byte order'],iq_order=v['I/Q'],mode=v['mode'],equalization=self.equalization.get());self.config.validate()
             path=self.path.get()
             if not path:raise ValueError('Chọn file IQ trước.')
         except Exception as e:
@@ -132,7 +137,7 @@ class App:
             b.set(title=f'Raw cut spectrum Hann, FFT={n}',xlabel='RF MHz (Fc người dùng)' if self.config.fc else 'Baseband MHz; Fc unknown',ylabel='dB tương đối peak',ylim=(-100,5))
         if 'symbols' in inter:
             q=inter['symbols']['qpsk_input'];c.scatter(q.real.ravel(),q.imag.ravel(),s=2,alpha=.3)
-            c.set(title=f'Đầu vào QPSK; {self.config.mode}; {q.shape}; FFT1024; Fs15.36 MS/s',xlabel='I a.u.',ylabel='Q a.u.')
+            c.set(title=f'Đầu vào QPSK; {self.config.mode}; EQ={self.config.equalization}; {q.shape}; FFT1024; Fs15.36 MS/s',xlabel='I a.u.',ylabel='Q a.u.')
         d.set(title='Đồ thị kinh/vĩ độ offline — không có bản đồ nền',xlabel='Longitude [degree]',ylabel='Latitude [degree]')
         positions=valid_positions(r)
         if self.redact.get():d.text(.1,.5,'Vị trí đang được che',transform=d.transAxes)
