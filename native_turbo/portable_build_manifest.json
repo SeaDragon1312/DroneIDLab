@@ -1,0 +1,146 @@
+{
+  "backend": "TurboFEC C/C++ WASM SIMD; Clang compiler also hosted in WASM",
+  "node": "v26.13.1",
+  "compiler": {
+    "memfs": {
+      "asset": "bin/memfs.wasm.gz",
+      "argv0": "memfs"
+    },
+    "clang": {
+      "asset": "bin/clang.wasm.gz",
+      "argv0": "clang"
+    },
+    "lld": {
+      "asset": "bin/lld.wasm.gz",
+      "argv0": "wasm-ld"
+    },
+    "sysroot": {
+      "asset": "bin/sysroot.tar.gz"
+    },
+    "resourceDir": "/lib/clang/22",
+    "compilerRuntimeLibDir": "lib/clang/22/lib/wasi",
+    "provenance": {
+      "name": "clang",
+      "version": "22.1.8",
+      "revision": "ca7933e47d3a3451d81e72ac174dcb5aa28b59d1"
+    }
+  },
+  "commands": [
+    {
+      "input": "src/turbo_dec.c",
+      "source_sha256": "af546298a3707edeebcaaede2269eb153a82bc9f3e9da22b230503ecd71059e6",
+      "language": "C",
+      "compileArgs": [
+        "-fgnuc-version=4.2.1",
+        "-DHAVE_SSE3",
+        "-I/include",
+        "-I/crc",
+        "-I/src"
+      ],
+      "opt": "2"
+    },
+    {
+      "input": "src/turbo_enc.c",
+      "source_sha256": "bf0c27265ba20dd01ffd40b83c64e7e4a83684f6973ec3472202e19ffbae0d52",
+      "language": "C",
+      "compileArgs": [
+        "-fgnuc-version=4.2.1",
+        "-DHAVE_SSE3",
+        "-I/include",
+        "-I/crc",
+        "-I/src"
+      ],
+      "opt": "2"
+    },
+    {
+      "input": "src/turbo_rate_match.c",
+      "source_sha256": "0ab5075c59b930bf5a4c3bceac420464e644b08de001a0e9aab5a4aae73e154c",
+      "language": "C",
+      "compileArgs": [
+        "-fgnuc-version=4.2.1",
+        "-DHAVE_SSE3",
+        "-I/include",
+        "-I/crc",
+        "-I/src"
+      ],
+      "opt": "2"
+    },
+    {
+      "input": "src/remove_turbo_reference.cc",
+      "source_sha256": "c75bc46f02634fc2c5945cb5c15e94a12fb7ac10756550616af7dad58d4c4f02",
+      "language": "CPP",
+      "compileArgs": [
+        "-fgnuc-version=4.2.1",
+        "-DHAVE_SSE3",
+        "-I/include",
+        "-I/crc",
+        "-I/src"
+      ],
+      "opt": "2"
+    },
+    {
+      "input": "src/turbo_bridge.cc",
+      "source_sha256": "8e24fdf74c6107c64b1fd6e66c6ce57acae5c1086da2f3d468a53a0c21ae2854",
+      "language": "CPP",
+      "compileArgs": [
+        "-fgnuc-version=4.2.1",
+        "-DHAVE_SSE3",
+        "-I/include",
+        "-I/crc",
+        "-I/src"
+      ],
+      "opt": "2"
+    },
+    {
+      "link": [
+        "wasm-ld",
+        "--no-entry",
+        "--export=__wasm_call_ctors",
+        "--export=droneid_turbo_decode",
+        "--export=droneid_turbo_abi_version",
+        "--export=droneid_test_decode_streams",
+        "--export=droneid_test_encode",
+        "--export=malloc",
+        "--export=free",
+        "-z",
+        "stack-size=1048576",
+        "-Llib/wasm32-wasi/noeh",
+        "-Llib/wasm32-wasi",
+        "src/turbo_dec.o",
+        "src/turbo_enc.o",
+        "src/turbo_rate_match.o",
+        "src/turbo_bridge.o",
+        "-lc++",
+        "-lc++abi",
+        "-lc",
+        "-lm",
+        "-Llib/clang/22/lib/wasi",
+        "-lclang_rt.builtins-wasm32",
+        "-o",
+        "droneid_turbo.wasm"
+      ]
+    }
+  ],
+  "package_lock_sha256": "2a7dbf291be7f36c5607ca983f014d3a4eaa8f240515f91c9b22eb9181a1de7d",
+  "source_commits": {
+    "proto17": {
+      "url": "https://github.com/proto17/dji_droneid",
+      "commit": "7c6dddad563724df93132e91b89e74650182ea1e",
+      "license": "MIT"
+    },
+    "turbofec": {
+      "url": "https://github.com/ttsou/turbofec",
+      "commit": "6de1f4604933d6c21a0ff0c75401cffa7debf3cd",
+      "license": "GPL-3.0-or-later"
+    },
+    "CRCpp": {
+      "url": "https://github.com/d-bahr/CRCpp",
+      "commit": "62d4791877a636fa4b51acc9181c65ac89364372",
+      "license": "BSD-3-Clause"
+    }
+  },
+  "files": {
+    "droneid_lab\\native\\droneid_turbo.wasm": "88f2693ff168647c367e436b3ecdb4cdabb4085ec7507b2f8e514e19d3a9281d",
+    "native_turbo\\build_wasm\\remove_turbo_reference.wasm": "ca5807d33c8bca62240ce5a8c8feadcd0af1b217511e57654a99d43dceed8107"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@live-codes/clang-wasm": "0.3.0"
+  }
+}

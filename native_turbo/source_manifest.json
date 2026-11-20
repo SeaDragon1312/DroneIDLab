@@ -1,0 +1,34 @@
+{
+  "repositories": {
+    "proto17": {
+      "url": "https://github.com/proto17/dji_droneid",
+      "commit": "7c6dddad563724df93132e91b89e74650182ea1e",
+      "license": "MIT"
+    },
+    "turbofec": {
+      "url": "https://github.com/ttsou/turbofec",
+      "commit": "6de1f4604933d6c21a0ff0c75401cffa7debf3cd",
+      "license": "GPL-3.0-or-later"
+    },
+    "CRCpp": {
+      "url": "https://github.com/d-bahr/CRCpp",
+      "commit": "62d4791877a636fa4b51acc9181c65ac89364372",
+      "license": "BSD-3-Clause"
+    }
+  },
+  "files": {
+    "third_party/turbofec/AUTHORS": "2db946ad08e9be21522ca0e4d7a9d6db233122525666f24180ff38dfc365ece2",
+    "third_party/turbofec/LICENSE": "6ef4585eb4c180a75a368e4474e73d1cd4dba87734b40859428bafc7bef0ce0c",
+    "third_party/turbofec/src/turbo_dec.c": "af546298a3707edeebcaaede2269eb153a82bc9f3e9da22b230503ecd71059e6",
+    "third_party/turbofec/src/turbo_enc.c": "bf0c27265ba20dd01ffd40b83c64e7e4a83684f6973ec3472202e19ffbae0d52",
+    "third_party/turbofec/src/turbo_int.h": "5ea7d18bebbce2b58139d5882c42d1b587d88888f73f385d5c82ad31023cd7de",
+    "third_party/turbofec/src/turbo_rate_match.c": "0ab5075c59b930bf5a4c3bceac420464e644b08de001a0e9aab5a4aae73e154c",
+    "third_party/turbofec/src/turbo_sse.h": "acc762f85c5724132a944a8343d125b31f055e5db83548f3b097ec1ef4b906a8",
+    "third_party/turbofec/include/turbofec/rate_match.h": "b71b5498f6a5135188f723750a4c1416a5d16209732167c2207fb186e5b29e06",
+    "third_party/turbofec/include/turbofec/turbo.h": "af559ec4c8d865d9b3bae45cd6800ff532780c68b5a7fa6ede2ce821742c300e",
+    "third_party/CRCpp/LICENSE": "954e7c6730168114b296fbcc60532fa7ce64236e1adf17c147878bb7949be09e",
+    "third_party/CRCpp/inc/CRC.h": "69044b3a09b388ca23ffd4837be29f812ff9105c42b3c261f880a179ea34741a",
+    "src/remove_turbo_reference.cc": "c75bc46f02634fc2c5945cb5c15e94a12fb7ac10756550616af7dad58d4c4f02"
+  },
+  "distribution_note": "Subset required by the supplied WASM build; retained upstream files are byte-identical. Full upstream commits are listed above."
+}
